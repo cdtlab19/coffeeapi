@@ -50,4 +50,26 @@ public class BlockchainService {
     private String loadCertificate(String path) throws FileNotFoundException, IOException {
         return new String(IOUtils.toByteArray(new FileInputStream(path)), "UTF-8");
     }
+
+    private void connectToFabricNetwork(Identity identity) {
+        // configurar toda conexão com o fabric, utilizando o package connection s/ SessionConnection
+        // Talvez retornar o ConnectionFabric
+    }
+
+    private void connectToChannel() {
+
+    }
+
+//    private void invoke() {
+//
+//    }
+//
+//    private void query() {
+//
+//    }
+
+
+    /*
+            A parte de connection, tirando a SessionConnection, pode ser integrada ao projeto, sem prejuízos, porém sendo verificados.
+     */
 }
