@@ -1,32 +1,34 @@
 package com.cdtlab19.coffeeapi.services;
 
-import com.cdtlab19.coffeeapi.domain.FabricConnection;
-import com.cdtlab19.coffeeapi.domain.FabricNetwork;
+import com.cdtlab19.coffeeapi.domain.*;
 import com.cdtlab19.coffeeapi.domain.Identity;
-import com.cdtlab19.coffeeapi.domain.StoreEnrollement;
+import com.cdtlab19.coffeeapi.responses.PeerResponse;
+import com.cdtlab19.coffeeapi.responses.Response;
+import com.cdtlab19.coffeeapi.responses.SdkResponse;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.hyperledger.fabric.sdk.*;
 import org.hyperledger.fabric.sdk.exception.CryptoException;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
 import org.hyperledger.fabric.sdk.exception.NetworkConfigurationException;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.hyperledger.fabric.sdk.exception.ProposalException;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Base64;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +55,7 @@ public class BlockchainService {
 
             return identity;
         } catch (IOException e) {
-            LOGGER.error("Error to load Identity, returning Identity with null.");
+            LOGGER.error("Error to load Identity.");
             e.printStackTrace();
             throw e;
         }
@@ -68,6 +70,7 @@ public class BlockchainService {
             PEMParser pemParser = new PEMParser(fileReader);
             PrivateKeyInfo pemPair = (PrivateKeyInfo) pemParser.readObject();
             PrivateKey privateKey = new JcaPEMKeyConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME).getPrivateKey(pemPair);
+            LOGGER.info("Private key loaded.");
             return privateKey;
         } catch (IOException e) {
             LOGGER.error("Deu erro aqui e nem sei o motivo...");
@@ -79,6 +82,7 @@ public class BlockchainService {
     private String loadCertificate(String path) throws IOException {
 
         try {
+            LOGGER.info("Loading certificate.");
             return new String(IOUtils.toByteArray(new FileInputStream(path)), "UTF-8");
         } catch (IOException e) {
             e.printStackTrace();
@@ -86,7 +90,7 @@ public class BlockchainService {
         }
     }
 
-    private FabricConnection connectToFabricNetwork(Identity identity) throws IOException, NetworkConfigurationException, InvalidArgumentException, IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException {
+    private Fabric connectToFabricNetwork(Identity identity) throws IOException, NetworkConfigurationException, InvalidArgumentException, IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException {
 
         FabricConnection fabricConnection = new FabricConnection();
         FabricNetwork fabricNetwork = new FabricNetwork();
@@ -108,38 +112,105 @@ public class BlockchainService {
         try {
             fabricNetwork.initializate(fabricConnection.getConnection(), identity.getAffiliation());
             LOGGER.info("fabricNetwork initialized with {}", identity.getAffiliation());
-            return fabricConnection;
+            return new Fabric(fabricConnection, fabricNetwork);
         } catch (InvalidArgumentException | NetworkConfigurationException | IOException e) {
             e.printStackTrace();
             throw e;
         }
     }
 
-    public FabricConnection testando() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, IOException, NetworkConfigurationException, InvalidArgumentException, IllegalAccessException, InvocationTargetException, InstantiationException, CryptoException, NoSuchMethodException, ClassNotFoundException {
+    public Fabric testando() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, IOException, NetworkConfigurationException, InvalidArgumentException, IllegalAccessException, InvocationTargetException, InstantiationException, CryptoException, NoSuchMethodException, ClassNotFoundException {
 //        Identity id = loadIdentity();
 //        LOGGER.error(id.getEnrollment().getCert());
 //        LOGGER.error(String.valueOf(id.getEnrollment().getKey()));
         return connectToFabricNetwork(loadIdentity());
     }
 
-//    private void connectToChannel() {
-//
-//    }
-//
-//    private void installChaincode() {
-//
-//    }
-//
-//    private void instantiateChaincode() {
-//
-//    }
-//
-//    private void upgradeChaincode() {
-//
-//    }
-//    private void invoke() {
-//
-//    }
+    public List<Response> invoke(String chaincodeName, String chaincodeMethod, String path, String[] arguments) throws IOException, IllegalAccessException, InvocationTargetException, InvalidArgumentException, InstantiationException, CryptoException, NoSuchMethodException, NetworkConfigurationException, ClassNotFoundException, ProposalException, ExecutionException, InterruptedException {
+
+        Fabric fabricTmp = connectToFabricNetwork(loadIdentity());
+        FabricChannel fabricChannel = new FabricChannel();
+        HFClient client = fabricTmp.getFabricConnection().getConnection();
+        fabricChannel.setChannel(client, fabricTmp.getFabricNetwork().getNetworkConfig(),
+                "mychannel");
+
+        // ver depois
+        List<Response> responseInvokeChaincode = new ArrayList<>();
+
+        LOGGER.info("Start invokeTest chaincode");
+        LOGGER.info("Create TransactionProposalRequest");
+        // LOGGER.info("Object {}", chaincode.toString());
+        LOGGER.info("ChaincodeName {}", chaincodeName);
+
+        TransactionProposalRequest transactionProposalRequest = client.newTransactionProposalRequest();
+        ChaincodeID cid = ChaincodeID.newBuilder().setName(chaincodeName).build();
+        transactionProposalRequest.setChaincodeID(cid);
+        transactionProposalRequest.setFcn(chaincodeMethod);
+        transactionProposalRequest.setArgs(arguments);
+
+        LOGGER.info("Infos");
+        LOGGER.info("Name: {}", transactionProposalRequest.getChaincodeName());
+        LOGGER.info("Version: {}", transactionProposalRequest.getChaincodeID().getVersion());
+        LOGGER.info("Fcn: {}", transactionProposalRequest.getFcn());
+        for (String args : transactionProposalRequest.getArgs())
+            LOGGER.info("Args: {}", args);
+        LOGGER.info("Channel {}", fabricChannel.getChannel().getName());
+        LOGGER.info("Status {}", fabricChannel.getChannel().isInitialized());
+
+        Collection<ProposalResponse> proposalResponses;
+        try {
+            proposalResponses = fabricChannel.getChannel().sendTransactionProposal(transactionProposalRequest);
+        } catch (ProposalException e) {
+            e.printStackTrace();
+            throw e;
+        }
+        LOGGER.info("Get response");
+        for (ProposalResponse response : proposalResponses) {
+            LOGGER.info("Peer {}", response.getPeer().getName());
+            LOGGER.info("Status {}", response.getStatus());
+            LOGGER.info("Message {}", response.getMessage());
+            LOGGER.info("Transaction Id {}", response.getTransactionID());
+
+            responseInvokeChaincode.add(new PeerResponse(response.getPeer().getName(), response.getStatus().toString(),
+                    response.getMessage(), response.getTransactionID()));
+        }
+
+        LOGGER.info("Send Transaction");
+
+        try {
+            return sendTransactionSync(responseInvokeChaincode, fabricChannel.getChannel(), proposalResponses);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    private List<Response> sendTransactionSync(List<Response> responseProposal, Channel channel, Collection<ProposalResponse> proposalResponses) throws ExecutionException, InterruptedException {
+        try {
+            BlockEvent.TransactionEvent transactionEvent = channel.sendTransaction(proposalResponses).get();
+            LOGGER.info("Size: {}", transactionEvent.getTransactionActionInfoCount());
+            for (BlockInfo.TransactionEnvelopeInfo.TransactionActionInfo transaction : transactionEvent.getTransactionActionInfos()) {
+                LOGGER.info("Status: {}", transaction.getResponseStatus());
+                LOGGER.info("Message: {}", transaction.getResponseMessage());
+                LOGGER.info("Payload: {}", new String(transaction.getEvent().getPayload()), StandardCharsets.UTF_8);
+                LOGGER.info("Status final: {}",	new String(transaction.getProposalResponsePayload(), StandardCharsets.UTF_8));
+
+                responseProposal.add(new SdkResponse(String.valueOf(transaction.getResponseStatus()),
+                        transaction.getResponseMessage(),
+                        new String(transaction.getEvent().getPayload(), StandardCharsets.UTF_8),
+                        new String(transaction.getProposalResponsePayload(), StandardCharsets.UTF_8)));
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+            e.printStackTrace();
+            throw e;
+        }
+        return responseProposal;
+    }
+
+
+
+
 //
 //    private void query() {
 //
@@ -147,6 +218,8 @@ public class BlockchainService {
 
 
     /*
+            github.com/cdtlab19/coffee-chaincodes/entry/coffee
+            github.com/cdtlab19/coffee-chaincodes/entry/user
             A parte de connection, tirando a SessionConnection, pode ser integrada ao projeto, sem prejuízos, porém sendo verificados.
      */
 }

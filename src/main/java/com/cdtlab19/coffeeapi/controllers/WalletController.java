@@ -1,5 +1,6 @@
 package com.cdtlab19.coffeeapi.controllers;
 
+import com.cdtlab19.coffeeapi.domain.Fabric;
 import com.cdtlab19.coffeeapi.domain.FabricConnection;
 import com.cdtlab19.coffeeapi.services.BlockchainService;
 import io.swagger.annotations.Api;
@@ -39,7 +40,10 @@ public class WalletController {
     )
     @PostMapping(path="identity")
     public ResponseEntity<String> loadIdentity() throws InvalidArgumentException, NoSuchAlgorithmException, IOException, NoSuchProviderException, NetworkConfigurationException, InvalidKeySpecException, IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException {
-        FabricConnection fbConnection = service.testando();
-        return new ResponseEntity<>(fbConnection.getConnection().getUserContext().getName(), HttpStatus.OK);
+        Fabric fb= service.testando();
+
+        // public List<Response> invoke(String chaincodeName, String chaincodeMethod, String path, String[] arguments)
+        service.invoke("coffee", "");
+        return new ResponseEntity<>(fb.getFabricConnection().getConnection().getUserContext().getName(), HttpStatus.OK);
     }
 }
