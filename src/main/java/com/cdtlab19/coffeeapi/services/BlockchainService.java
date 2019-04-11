@@ -15,6 +15,7 @@ import org.hyperledger.fabric.sdk.exception.CryptoException;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
 import org.hyperledger.fabric.sdk.exception.NetworkConfigurationException;
 import org.hyperledger.fabric.sdk.exception.ProposalException;
+import org.hyperledger.fabric.sdk.exception.TransactionException;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
@@ -90,7 +91,8 @@ public class BlockchainService {
         }
     }
 
-    private Fabric connectToFabricNetwork(Identity identity) throws IOException, NetworkConfigurationException, InvalidArgumentException, IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException {
+    private Fabric connectToFabricNetwork(Identity identity) throws IOException, NetworkConfigurationException, InvalidArgumentException,
+            IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException {
 
         FabricConnection fabricConnection = new FabricConnection();
         FabricNetwork fabricNetwork = new FabricNetwork();
@@ -119,14 +121,15 @@ public class BlockchainService {
         }
     }
 
-    public Fabric testando() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, IOException, NetworkConfigurationException, InvalidArgumentException, IllegalAccessException, InvocationTargetException, InstantiationException, CryptoException, NoSuchMethodException, ClassNotFoundException {
-//        Identity id = loadIdentity();
-//        LOGGER.error(id.getEnrollment().getCert());
-//        LOGGER.error(String.valueOf(id.getEnrollment().getKey()));
+    public Fabric testando() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, IOException, NetworkConfigurationException,
+            InvalidArgumentException, IllegalAccessException, InvocationTargetException, InstantiationException, CryptoException, NoSuchMethodException,
+            ClassNotFoundException {
         return connectToFabricNetwork(loadIdentity());
     }
 
-    public List<Response> invoke(String chaincodeName, String chaincodeMethod, String path, String[] arguments) throws IOException, IllegalAccessException, InvocationTargetException, InvalidArgumentException, InstantiationException, CryptoException, NoSuchMethodException, NetworkConfigurationException, ClassNotFoundException, ProposalException, ExecutionException, InterruptedException {
+    public List<Response> invoke(String chaincodeName, String chaincodeMethod, String path, String[] arguments) throws IOException, IllegalAccessException,
+            InvocationTargetException, InvalidArgumentException, InstantiationException, CryptoException, NoSuchMethodException,
+            NetworkConfigurationException, ClassNotFoundException, ProposalException, ExecutionException, InterruptedException, TransactionException {
 
         Fabric fabricTmp = connectToFabricNetwork(loadIdentity());
         FabricChannel fabricChannel = new FabricChannel();
@@ -177,15 +180,10 @@ public class BlockchainService {
 
         LOGGER.info("Send Transaction");
 
-        try {
-            return sendTransactionSync(responseInvokeChaincode, fabricChannel.getChannel(), proposalResponses);
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            throw e;
-        }
+        return sendTransactionSync(responseInvokeChaincode, fabricChannel.getChannel(), proposalResponses);
     }
 
-    private List<Response> sendTransactionSync(List<Response> responseProposal, Channel channel, Collection<ProposalResponse> proposalResponses) throws ExecutionException, InterruptedException {
+    private List<Response> sendTransactionSync(List<Response> responseProposal, Channel channel, Collection<ProposalResponse> proposalResponses) {
         try {
             BlockEvent.TransactionEvent transactionEvent = channel.sendTransaction(proposalResponses).get();
             LOGGER.info("Size: {}", transactionEvent.getTransactionActionInfoCount());
@@ -202,16 +200,10 @@ public class BlockchainService {
             }
         } catch (Exception e) {
             // TODO: handle exception
-            e.printStackTrace();
-            throw e;
         }
         return responseProposal;
     }
 
-
-
-
-//
 //    private void query() {
 //
 //    }
@@ -221,5 +213,6 @@ public class BlockchainService {
             github.com/cdtlab19/coffee-chaincodes/entry/coffee
             github.com/cdtlab19/coffee-chaincodes/entry/user
             A parte de connection, tirando a SessionConnection, pode ser integrada ao projeto, sem prejuízos, porém sendo verificados.
+            Error:(134, 33) java: unreported exception org.hyperledger.fabric.sdk.exception.TransactionException; must be caught or declared to be thrown
      */
 }

@@ -7,9 +7,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.hyperledger.fabric.sdk.exception.CryptoException;
-import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
-import org.hyperledger.fabric.sdk.exception.NetworkConfigurationException;
+import org.hyperledger.fabric.sdk.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.concurrent.ExecutionException;
 
 
 @RestController
@@ -39,11 +38,9 @@ public class WalletController {
         }
     )
     @PostMapping(path="identity")
-    public ResponseEntity<String> loadIdentity() throws InvalidArgumentException, NoSuchAlgorithmException, IOException, NoSuchProviderException, NetworkConfigurationException, InvalidKeySpecException, IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException {
+    public ResponseEntity<String> loadIdentity() throws InvalidArgumentException, NoSuchAlgorithmException, IOException, NoSuchProviderException, NetworkConfigurationException, InvalidKeySpecException, IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException, InterruptedException, ExecutionException, TransactionException, ProposalException {
         Fabric fb= service.testando();
-
-        // public List<Response> invoke(String chaincodeName, String chaincodeMethod, String path, String[] arguments)
-        service.invoke("coffee", "");
+        service.invoke("coffee", "CreateCoffee", "github.com/cdtlab19/coffee-chaincode/entry/coffee", new String[]{"cappuccino"});
         return new ResponseEntity<>(fb.getFabricConnection().getConnection().getUserContext().getName(), HttpStatus.OK);
     }
 }

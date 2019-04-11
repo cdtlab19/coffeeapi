@@ -36,7 +36,7 @@ public class FabricChannel {
     }
 
     public void setChannel(HFClient client, NetworkConfig network, String channelName)
-            throws InvalidArgumentException, TransactionException, NetworkConfigurationException, IOException {
+            throws InvalidArgumentException, TransactionException, NetworkConfigurationException {
 
         try {
             LOGGER.info("Channel initialized {}", channel.isInitialized());
