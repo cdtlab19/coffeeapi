@@ -3,8 +3,10 @@ package com.cdtlab19.coffeeapi.services;
 import com.cdtlab19.coffeeapi.domain.*;
 import com.cdtlab19.coffeeapi.domain.Identity;
 import com.cdtlab19.coffeeapi.responses.PeerResponse;
+import com.cdtlab19.coffeeapi.responses.QueryResponse;
 import com.cdtlab19.coffeeapi.responses.Response;
 import com.cdtlab19.coffeeapi.responses.SdkResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -37,6 +39,7 @@ import org.slf4j.LoggerFactory;
 @Service
 public class BlockchainService {
 
+    private ObjectMapper mapper = new ObjectMapper();
     private Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     static final String privateKey_path = "./basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/cd96d5260ad4757551ed4a5a991e62130f8008a0bf996e4e4b84cd097a747fec_sk";//getPrivateKeyFromBytes(IOUtils.toByteArray(new FileInputStream("./basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/cd96d5260ad4757551ed4a5a991e62130f8008a0bf996e4e4b84cd097a747fec_sk";
@@ -204,9 +207,57 @@ public class BlockchainService {
         return responseProposal;
     }
 
-//    private void query() {
-//
-//    }
+    private List<Response> query(String chaincodeName, String chaincodeMethod, String path, String[] arguments) throws
+            IOException, IllegalAccessException, InvocationTargetException, InvalidArgumentException, InstantiationException,
+            CryptoException, NoSuchMethodException, NetworkConfigurationException, ClassNotFoundException, ProposalException, TransactionException {
+
+        List<Response> responseQueryTest = new ArrayList<>();
+        PeerResponse responsePeer;
+        String stringResponse = "";
+
+
+        // establishes a fabric connection
+        // then we have its client and channel
+        //
+        Fabric fabricTmp = connectToFabricNetwork(loadIdentity());
+        FabricChannel fabricChannel = new FabricChannel();
+        HFClient client = fabricTmp.getFabricConnection().getConnection();
+        fabricChannel.setChannel(client, fabricTmp.getFabricNetwork().getNetworkConfig(),
+                "mychannel");
+
+        QueryByChaincodeRequest queryByChaincodeRequest = client.newQueryProposalRequest();
+        ChaincodeID cid = ChaincodeID.newBuilder().setName(chaincodeName).build();
+        queryByChaincodeRequest.setChaincodeID(cid);
+        queryByChaincodeRequest.setFcn(chaincodeMethod);
+        queryByChaincodeRequest.setArgs(arguments);
+
+        LOGGER.info("Infos");
+        LOGGER.info("Name: {}", queryByChaincodeRequest.getChaincodeName());
+        LOGGER.info("Version: {}", queryByChaincodeRequest.getChaincodeID().getVersion());
+        LOGGER.info("Fcn: {}", queryByChaincodeRequest.getFcn());
+        for (String args : queryByChaincodeRequest.getArgs())
+            LOGGER.info("Args: {}", args);
+
+        Collection<ProposalResponse> response = fabricChannel.getChannel().queryByChaincode(queryByChaincodeRequest);
+        LOGGER.info("Get response");
+        for (ProposalResponse proposalResponse : response) {
+            LOGGER.info("status {}", proposalResponse.getStatus());
+            LOGGER.info("message {}", proposalResponse.getMessage());
+
+            stringResponse = new String(proposalResponse.getChaincodeActionResponsePayload());
+            LOGGER.info("Response {}", stringResponse);
+            responsePeer = new PeerResponse(proposalResponse.getPeer().getName(),
+                    proposalResponse.getStatus().toString(), proposalResponse.getMessage(),
+                    proposalResponse.getTransactionID());
+
+            responseQueryTest.add(new QueryResponse(responsePeer, mapper.readValue(stringResponse, Object.class)));
+
+            //LOGGER.info("Response: {}", stringResponse);
+        }
+
+        return responseQueryTest;
+
+    }
 
 
     /*
