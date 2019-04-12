@@ -207,7 +207,7 @@ public class BlockchainService {
         return responseProposal;
     }
 
-    private List<Response> query(String chaincodeName, String chaincodeMethod, String path, String[] arguments) throws
+    public List<Response> query(String chaincodeName, String chaincodeMethod, String path, String[] arguments) throws
             IOException, IllegalAccessException, InvocationTargetException, InvalidArgumentException, InstantiationException,
             CryptoException, NoSuchMethodException, NetworkConfigurationException, ClassNotFoundException, ProposalException, TransactionException {
 
@@ -222,8 +222,7 @@ public class BlockchainService {
         Fabric fabricTmp = connectToFabricNetwork(loadIdentity());
         FabricChannel fabricChannel = new FabricChannel();
         HFClient client = fabricTmp.getFabricConnection().getConnection();
-        fabricChannel.setChannel(client, fabricTmp.getFabricNetwork().getNetworkConfig(),
-                "mychannel");
+        fabricChannel.setChannel(client, fabricTmp.getFabricNetwork().getNetworkConfig(), "mychannel");
 
         QueryByChaincodeRequest queryByChaincodeRequest = client.newQueryProposalRequest();
         ChaincodeID cid = ChaincodeID.newBuilder().setName(chaincodeName).build();
