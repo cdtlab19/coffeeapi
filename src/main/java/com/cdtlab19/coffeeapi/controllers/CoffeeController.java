@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.security.NoSuchAlgorithmException;
@@ -64,6 +65,20 @@ public class CoffeeController {
         String[] args = {coffeeModel.getType()};
         List<Response> response = coffeeService.InvokeCoffee(new String[]{id}, "DeleteCoffee");
         response = coffeeService.InvokeCoffee(args, "CreateCoffee");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping (path="/{id}")
+    public  ResponseEntity<List<Response>> GetCoffee(CoffeeDTO coffeemodel, HttpServletRequest request) throws InvalidArgumentException, NoSuchAlgorithmException, IOException, NoSuchProviderException, NetworkConfigurationException, InvalidKeySpecException, IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException, InterruptedException, ExecutionException, TransactionException, ProposalException {
+        String[] args = {coffeemodel.getId()};
+        List<Response> response = coffeeService.QueryCoffee(args, "GetCoffee");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @DeleteMapping (path="/{id}")
+    public  ResponseEntity<List<Response>> DeleteCoffee(CoffeeDTO coffeemodel, HttpServletRequest request) throws IOException, TransactionException, InstantiationException, InvocationTargetException, ExecutionException, InterruptedException, IllegalAccessException, InvalidArgumentException, NetworkConfigurationException, CryptoException, ClassNotFoundException, NoSuchMethodException, ProposalException {
+        String[] args = {coffeemodel.getId()};
+        List<Response> response = coffeeService.InvokeCoffee(args, "DeleteCoffee");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
