@@ -1,6 +1,7 @@
 package com.cdtlab19.coffeeapi.controllers;
 
 import com.cdtlab19.coffeeapi.domain.Fabric;
+import com.cdtlab19.coffeeapi.dto.CoffeeDTO;
 import com.cdtlab19.coffeeapi.dto.UseCoffeeDTO;
 import com.cdtlab19.coffeeapi.responses.Response;
 import com.cdtlab19.coffeeapi.services.CoffeeService;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @RestController
-@RequestMapping(value="/api/coffee")
+@RequestMapping(value="/api/coffees")
 @Api(value="Título", description="Descrição")
 public class CoffeeController {
 
@@ -37,17 +38,32 @@ public class CoffeeController {
                     @ApiResponse(code=200, message="Sucesso"),
             }
     )
-    @GetMapping(path="coffees")
+    @GetMapping(path="/")
     public ResponseEntity<List<Response>> allCoffee() throws IOException, NoSuchAlgorithmException, InvocationTargetException, InstantiationException, InvalidArgumentException, CryptoException, NoSuchProviderException, IllegalAccessException, NetworkConfigurationException, InvalidKeySpecException, NoSuchMethodException, ClassNotFoundException, InterruptedException, ExecutionException, TransactionException, ProposalException {
         String[] args ={""};
         List<Response> response = coffeeService.QueryCoffee(args, "AllCoffee");
         return new ResponseEntity<>(response , HttpStatus.OK);
     }
 
-    @PutMapping(path="/coffees/{id}/use{userId}")
+    @PutMapping(path="/{id}/use{userId}")
     public ResponseEntity<List<Response>> useCoffee(UseCoffeeDTO useCoffeeModel) throws IOException, NoSuchAlgorithmException, InvocationTargetException, InstantiationException, InvalidArgumentException, CryptoException, NoSuchProviderException, IllegalAccessException, NetworkConfigurationException, InvalidKeySpecException, NoSuchMethodException, ClassNotFoundException, InterruptedException, ExecutionException, TransactionException, ProposalException {
         String[] args ={useCoffeeModel.getCoffeeId(),useCoffeeModel.getUserId()};
         List<Response> response = coffeeService.InvokeCoffee(args, "UseCoffee");
         return new ResponseEntity<>(response , HttpStatus.OK);
+    }
+
+    @PostMapping(path="/")
+    public  ResponseEntity<List<Response>> createCoffee(CoffeeDTO coffeeModel) throws IOException, TransactionException, InstantiationException, InvocationTargetException, ExecutionException, InterruptedException, IllegalAccessException, InvalidArgumentException, NetworkConfigurationException, CryptoException, ClassNotFoundException, NoSuchMethodException, ProposalException {
+        String[] args={coffeeModel.getType()};
+        List<Response> response = coffeeService.InvokeCoffee(args, "CreateCoffee");
+        return new ResponseEntity<>(response , HttpStatus.OK );
+    }
+
+    @PutMapping(path="/{id}")
+    public ResponseEntity<List<Response>> updateCoffee(@PathVariable String id, CoffeeDTO coffeeModel) throws IOException, TransactionException, InstantiationException, InvocationTargetException, ExecutionException, InterruptedException, IllegalAccessException, InvalidArgumentException, NetworkConfigurationException, CryptoException, ClassNotFoundException, NoSuchMethodException, ProposalException {
+        String[] args = {coffeeModel.getType()};
+        List<Response> response = coffeeService.InvokeCoffee(new String[]{id}, "DeleteCoffee");
+        response = coffeeService.InvokeCoffee(args, "CreateCoffee");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

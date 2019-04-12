@@ -31,16 +31,16 @@ public class WalletController {
     @Autowired
     BlockchainService service;
 
-    @ApiOperation(value="Descrição")
-    @ApiResponses(
-        value={
-            @ApiResponse(code=200, message="Sucesso"),
-        }
-    )
-    @PostMapping(path="identity")
+//    @ApiOperation(value="Descrição")
+//    @ApiResponses(
+//        value={
+//            @ApiResponse(code=200, message="Sucesso"),
+//        }
+//    )
+//    @PostMapping(path="identity")
     public ResponseEntity<String> loadIdentity() throws InvalidArgumentException, NoSuchAlgorithmException, IOException, NoSuchProviderException, NetworkConfigurationException, InvalidKeySpecException, IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException, InterruptedException, ExecutionException, TransactionException, ProposalException {
         Fabric fb= service.testando();
-        service.invoke("coffee", "CreateCoffee", "github.com/cdtlab19/coffee-chaincode/entry/coffee", new String[]{"cappuccino"});
+        // service.invoke("coffee", "CreateCoffee", "github.com/cdtlab19/coffee-chaincode/entry/coffee", new String[]{"cappuccino"});
         return new ResponseEntity<>(fb.getFabricConnection().getConnection().getUserContext().getName(), HttpStatus.OK);
     }
 }
