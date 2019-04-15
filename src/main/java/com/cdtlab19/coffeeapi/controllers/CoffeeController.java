@@ -46,7 +46,7 @@ public class CoffeeController {
         return new ResponseEntity<>(response , HttpStatus.OK);
     }
 
-    @PutMapping(path="/{id}/use{userId}")
+    @PutMapping(path="/{id}/use/{userId}")
     public ResponseEntity<List<Response>> useCoffee(UseCoffeeDTO useCoffeeModel) throws IOException, NoSuchAlgorithmException, InvocationTargetException, InstantiationException, InvalidArgumentException, CryptoException, NoSuchProviderException, IllegalAccessException, NetworkConfigurationException, InvalidKeySpecException, NoSuchMethodException, ClassNotFoundException, InterruptedException, ExecutionException, TransactionException, ProposalException {
         String[] args ={useCoffeeModel.getCoffeeId(),useCoffeeModel.getUserId()};
         List<Response> response = coffeeService.InvokeCoffee(args, "UseCoffee");
