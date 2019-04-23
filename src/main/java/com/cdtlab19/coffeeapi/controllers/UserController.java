@@ -40,8 +40,12 @@ public class UserController {
     )
 
     @PostMapping(path="/")
-    public ResponseEntity<List<Response>> createUser(UserDTO user)throws IOException, TransactionException, InstantiationException, InvocationTargetException, ExecutionException, InterruptedException, IllegalAccessException, InvalidArgumentException, NetworkConfigurationException, CryptoException, ClassNotFoundException, NoSuchMethodException, ProposalException {
-        String[] args={user.getName()};
+    public ResponseEntity<List<Response>> createUser(UserDTO user)throws IOException, TransactionException,
+            InstantiationException, InvocationTargetException, ExecutionException, InterruptedException,
+            IllegalAccessException, InvalidArgumentException, NetworkConfigurationException, CryptoException,
+            ClassNotFoundException, NoSuchMethodException, ProposalException {
+
+        String[] args={user.getName(), user.getRemainingCoffee().toString()};
         List<Response> response = userService.InvokeUser(args, "CreateUser");
         return new ResponseEntity<>(response , HttpStatus.OK );
     }
@@ -68,9 +72,9 @@ public class UserController {
     }
 
     @GetMapping(path="/")
-    public ResponseEntity<List<Response>> allUsers() throws IOException, NoSuchAlgorithmException, InvocationTargetException, InstantiationException, InvalidArgumentException, CryptoException, NoSuchProviderException, IllegalAccessException, NetworkConfigurationException, InvalidKeySpecException, NoSuchMethodException, ClassNotFoundException, InterruptedException, ExecutionException, TransactionException, ProposalException{
+    public ResponseEntity<Response> allUsers() throws IOException, NoSuchAlgorithmException, InvocationTargetException, InstantiationException, InvalidArgumentException, CryptoException, NoSuchProviderException, IllegalAccessException, NetworkConfigurationException, InvalidKeySpecException, NoSuchMethodException, ClassNotFoundException, InterruptedException, ExecutionException, TransactionException, ProposalException{
         List<Response> response = userService.QueryUser(new String[] {""}, "AllUser");
-        return new ResponseEntity<>(response , HttpStatus.OK);
+        return new ResponseEntity<>(response.get(0) , HttpStatus.OK);
 
     }
 

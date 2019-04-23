@@ -6,6 +6,8 @@ import com.cdtlab19.coffeeapi.responses.PeerResponse;
 import com.cdtlab19.coffeeapi.responses.QueryResponse;
 import com.cdtlab19.coffeeapi.responses.Response;
 import com.cdtlab19.coffeeapi.responses.SdkResponse;
+import com.cdtlab19.coffeeapi.services.exceptions.FabricException;
+import com.cdtlab19.coffeeapi.services.exceptions.IdentityException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -50,78 +52,78 @@ public class BlockchainService {
         LOGGER.info("Security provider added.");
     }
 
-    private Identity loadIdentity() throws IOException {
+    private Identity loadIdentity() {
         LOGGER.info("Loading Identity...");
-        try {
-            StoreEnrollement enrollment = new StoreEnrollement(loadPrivateKey(privateKey_path), loadCertificate(certificate_path));
-            Identity identity = new Identity("adminorg1", "Org1", "Org1MSP", enrollment);
-            LOGGER.info("Identity loaded: {}.", identity.getName());
 
-            return identity;
-        } catch (IOException e) {
-            LOGGER.error("Error to load Identity.");
-            e.printStackTrace();
-            throw e;
-        }
+        StoreEnrollement enrollment = new StoreEnrollement(loadPrivateKey(privateKey_path), loadCertificate(certificate_path));
+        Identity identity = new Identity("adminorg1", "Org1", "Org1MSP", enrollment);
+        LOGGER.info("Identity loaded: {}.", identity.getName());
+
+        return identity;
+
     }
 
 
-    private PrivateKey loadPrivateKey(String path) throws IOException {
+    private PrivateKey loadPrivateKey(String path) {
 
-        try {
             LOGGER.info("Trying load private key...");
-            FileReader fileReader = new FileReader(privateKey_path);
-            PEMParser pemParser = new PEMParser(fileReader);
-            PrivateKeyInfo pemPair = (PrivateKeyInfo) pemParser.readObject();
-            PrivateKey privateKey = new JcaPEMKeyConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME).getPrivateKey(pemPair);
-            LOGGER.info("Private key loaded.");
-            return privateKey;
-        } catch (IOException e) {
-            LOGGER.error("Deu erro aqui e nem sei o motivo...");
-            e.printStackTrace();
-            throw e;
-        }
+            try {
+                FileReader fileReader = new FileReader(privateKey_path);
+                PEMParser pemParser = new PEMParser(fileReader);
+                PrivateKeyInfo pemPair = (PrivateKeyInfo) pemParser.readObject();
+                PrivateKey privateKey = new JcaPEMKeyConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME).getPrivateKey(pemPair);
+                LOGGER.info("Private key loaded.");
+                return privateKey;
+            } catch (IOException e) {
+                throw new IdentityException(e.getMessage());
+            }
     }
 
-    private String loadCertificate(String path) throws IOException {
+    private String loadCertificate(String path) {
 
+        LOGGER.info("Loading certificate.");
         try {
-            LOGGER.info("Loading certificate.");
             return new String(IOUtils.toByteArray(new FileInputStream(path)), "UTF-8");
         } catch (IOException e) {
-            e.printStackTrace();
-            throw e;
+            throw new IdentityException(e.getMessage());
         }
+
     }
 
-    private Fabric connectToFabricNetwork(Identity identity) throws IOException, NetworkConfigurationException, InvalidArgumentException,
-            IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException {
+    private Fabric connectToFabricNetwork(Identity identity) {
 
         FabricConnection fabricConnection = new FabricConnection();
         FabricNetwork fabricNetwork = new FabricNetwork();
         LOGGER.info("fabricConnection and fabricNetwork created.");
         // initialize all fabric configurations, and create a HFClient to communicate with Fabric
+
         try {
             fabricConnection.initializesConnection();
-        } catch (IllegalAccessException | InvocationTargetException | InstantiationException | NoSuchMethodException |
-                 CryptoException | ClassNotFoundException e) {
-            e.printStackTrace();
-            throw e;
+        } catch (IllegalAccessException | InvocationTargetException |  InvalidArgumentException | InstantiationException
+                | NoSuchMethodException | CryptoException | ClassNotFoundException e) {
+            throw new FabricException(e.getMessage());
         }
+
         LOGGER.info("Connection with fabric initialized");
         // set the context to Identity (cert and key) that we'll use, that is, it tell to Fabric our privilege
-        fabricConnection.setContext(identity);
+        try {
+            fabricConnection.setContext(identity);
+        } catch (InvalidArgumentException e) {
+            throw new FabricException(e.getMessage());
+        }
         LOGGER.info("set fabricConnection context to Identity {}", identity);
         // Initialize the Fabric network using HFClient created with fabricConnection and Affiliation identity
 
+
         try {
             fabricNetwork.initializate(fabricConnection.getConnection(), identity.getAffiliation());
-            LOGGER.info("fabricNetwork initialized with {}", identity.getAffiliation());
-            return new Fabric(fabricConnection, fabricNetwork);
         } catch (InvalidArgumentException | NetworkConfigurationException | IOException e) {
-            e.printStackTrace();
-            throw e;
+            throw new FabricException(e.getMessage());
         }
+
+        LOGGER.info("fabricNetwork initialized with {}", identity.getAffiliation());
+        return new Fabric(fabricConnection, fabricNetwork);
+
     }
 
     public Fabric testando() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, IOException, NetworkConfigurationException,
@@ -130,15 +132,17 @@ public class BlockchainService {
         return connectToFabricNetwork(loadIdentity());
     }
 
-    public List<Response> invoke(String chaincodeName, String chaincodeMethod, String path, String[] arguments) throws IOException, IllegalAccessException,
-            InvocationTargetException, InvalidArgumentException, InstantiationException, CryptoException, NoSuchMethodException,
-            NetworkConfigurationException, ClassNotFoundException, ProposalException, ExecutionException, InterruptedException, TransactionException {
+    public List<Response> invoke(String chaincodeName, String chaincodeMethod, String path, String[] arguments) {
 
         Fabric fabricTmp = connectToFabricNetwork(loadIdentity());
         FabricChannel fabricChannel = new FabricChannel();
         HFClient client = fabricTmp.getFabricConnection().getConnection();
-        fabricChannel.setChannel(client, fabricTmp.getFabricNetwork().getNetworkConfig(),
-                "mychannel");
+
+        try {
+            fabricChannel.setChannel(client, fabricTmp.getFabricNetwork().getNetworkConfig(),"mychannel");
+        } catch (InvalidArgumentException | TransactionException | NetworkConfigurationException e){
+            throw new FabricException(e.getMessage());
+        }
 
         // ver depois
         List<Response> responseInvokeChaincode = new ArrayList<>();
@@ -158,18 +162,20 @@ public class BlockchainService {
         LOGGER.info("Name: {}", transactionProposalRequest.getChaincodeName());
         LOGGER.info("Version: {}", transactionProposalRequest.getChaincodeID().getVersion());
         LOGGER.info("Fcn: {}", transactionProposalRequest.getFcn());
+
         for (String args : transactionProposalRequest.getArgs())
             LOGGER.info("Args: {}", args);
         LOGGER.info("Channel {}", fabricChannel.getChannel().getName());
         LOGGER.info("Status {}", fabricChannel.getChannel().isInitialized());
 
         Collection<ProposalResponse> proposalResponses;
+
         try {
             proposalResponses = fabricChannel.getChannel().sendTransactionProposal(transactionProposalRequest);
-        } catch (ProposalException e) {
-            e.printStackTrace();
-            throw e;
+        } catch (ProposalException | InvalidArgumentException e) {
+            throw new FabricException(e.getMessage());
         }
+
         LOGGER.info("Get response");
         for (ProposalResponse response : proposalResponses) {
             LOGGER.info("Peer {}", response.getPeer().getName());
@@ -202,10 +208,11 @@ public class BlockchainService {
                         new String(transaction.getProposalResponsePayload(), StandardCharsets.UTF_8)));
             }
         } catch (Exception e) {
-            // TODO: handle exception
+            throw new FabricException(e.getMessage());
         }
         return responseProposal;
     }
+
 
     public List<Response> query(String chaincodeName, String chaincodeMethod, String path, String[] arguments) throws
             IOException, IllegalAccessException, InvocationTargetException, InvalidArgumentException, InstantiationException,
@@ -266,3 +273,113 @@ public class BlockchainService {
             Error:(134, 33) java: unreported exception org.hyperledger.fabric.sdk.exception.TransactionException; must be caught or declared to be thrown
      */
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//    public List<Response> query(String chaincodeName, String chaincodeMethod, String path, String[] arguments) {
+//
+//
+//        List<Response> responseQueryTest = new ArrayList<>();
+//        PeerResponse responsePeer;
+//        String stringResponse = "";
+//
+//
+//        // establishes a fabric connection
+//        // then we have its client and channel
+//
+//        Fabric fabricTmp = connectToFabricNetwork(loadIdentity());
+//        FabricChannel fabricChannel = new FabricChannel();
+//        HFClient client = fabricTmp.getFabricConnection().getConnection();
+//
+//        try {
+//            fabricChannel.setChannel(client, fabricTmp.getFabricNetwork().getNetworkConfig(),"mychannel");
+//        } catch (InvalidArgumentException | TransactionException | NetworkConfigurationException e){
+//            throw new FabricException(e.getMessage());
+//        }
+//
+//        QueryByChaincodeRequest queryByChaincodeRequest = client.newQueryProposalRequest();
+//        ChaincodeID cid = ChaincodeID.newBuilder().setName(chaincodeName).build();
+//        queryByChaincodeRequest.setChaincodeID(cid);
+//        queryByChaincodeRequest.setFcn(chaincodeMethod);
+//        queryByChaincodeRequest.setArgs(arguments);
+//
+//        LOGGER.info("Infos");
+//        LOGGER.info("Name: {}", queryByChaincodeRequest.getChaincodeName());
+//        LOGGER.info("Version: {}", queryByChaincodeRequest.getChaincodeID().getVersion());
+//        LOGGER.info("Fcn: {}", queryByChaincodeRequest.getFcn());
+//
+//        for (String args : queryByChaincodeRequest.getArgs())
+//            LOGGER.info("Args: {}", args);
+//
+//        Collection<ProposalResponse> response;
+//        try{
+//            response = fabricChannel.getChannel().queryByChaincode(queryByChaincodeRequest);
+//        } catch (InvalidArgumentException | ProposalException e) {
+//            throw new FabricException(e.getMessage());
+//        }
+//
+//        LOGGER.info("Get response");
+//
+//        for (ProposalResponse proposalResponse : response) {
+//            LOGGER.info("status {}", proposalResponse.getStatus());
+//            LOGGER.info("message {}", proposalResponse.getMessage());
+//
+//            try {
+//                stringResponse = new String(proposalResponse.getChaincodeActionResponsePayload());
+//            } catch (InvalidArgumentException e) {
+//                throw new FabricException(e.getMessage());
+//            }
+//
+//            LOGGER.info("Response {}", stringResponse);
+//
+//            responsePeer = new PeerResponse(proposalResponse.getPeer().getName(),
+//                    proposalResponse.getStatus().toString(), proposalResponse.getMessage(),
+//                    proposalResponse.getTransactionID());
+//
+//            try {
+//                responseQueryTest.add(new QueryResponse(responsePeer, mapper.readValue(stringResponse, Object.class)));
+//            } catch (IOException e) {
+//                throw new FabricException(e.getMessage());
+//            }
+//            //LOGGER.info("Response: {}", stringResponse);
+//        }
+//
+//        return responseQueryTest;
+//
+//    }
+//
+//
+//    /*
+//            github.com/cdtlab19/coffee-chaincodes/entry/coffee
+//            github.com/cdtlab19/coffee-chaincodes/entry/user
+//            A parte de connection, tirando a SessionConnection, pode ser integrada ao projeto, sem prejuízos, porém sendo verificados.
+//            Error:(134, 33) java: unreported exception org.hyperledger.fabric.sdk.exception.TransactionException; must be caught or declared to be thrown
+//     */
+//}

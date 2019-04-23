@@ -41,8 +41,8 @@ public class CoffeeController {
     )
     @GetMapping(path="/")
     public ResponseEntity<List<Response>> allCoffee() throws IOException, NoSuchAlgorithmException, InvocationTargetException, InstantiationException, InvalidArgumentException, CryptoException, NoSuchProviderException, IllegalAccessException, NetworkConfigurationException, InvalidKeySpecException, NoSuchMethodException, ClassNotFoundException, InterruptedException, ExecutionException, TransactionException, ProposalException {
-        String[] args ={""};
-        List<Response> response = coffeeService.QueryCoffee(args, "AllCoffee");
+//        String[] args ={""};
+        List<Response> response = coffeeService.QueryCoffee(new String[] {""}, "AllCoffee");
         return new ResponseEntity<>(response , HttpStatus.OK);
     }
 
