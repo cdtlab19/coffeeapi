@@ -1,5 +1,8 @@
 package com.cdtlab19.coffeeapi.domain;
 
+
+import com.cdtlab19.coffeeapi.services.exceptions.NetworkConfigException;
+import com.cdtlab19.coffeeapi.services.exceptions.NetworkPeerException;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hyperledger.fabric.sdk.HFClient;
@@ -29,8 +32,8 @@ public class FabricNetwork {
     private Collection<Peer> peersOrg;
     private List<String> channels;
 
-    public void initializate(HFClient client, String organization)
-            throws InvalidArgumentException, NetworkConfigurationException, IOException {
+    public void initializate(HFClient client, String organization) throws NetworkConfigException, NetworkPeerException {
+            // throws InvalidArgumentException, NetworkConfigurationException, IOException {
         peersOrg = new LinkedList<>();
         channels = new ArrayList<>();
         LOGGER.info("Initializes array peers");
@@ -40,18 +43,29 @@ public class FabricNetwork {
         File file = new File(configFile);
         LOGGER.info("Open file configuration {}", configFile);
 
-        networkConfig = NetworkConfig.fromYamlFile(file);
+        try {
+            networkConfig = NetworkConfig.fromYamlFile(file);
+        } catch (InvalidArgumentException | IOException | NetworkConfigurationException e) {
+            throw new NetworkConfigException("Failed to configure network", e);
+        }
         LOGGER.info("Load configuration in NetworkConfig");
 
         NetworkConfig.OrgInfo organizationInfo = networkConfig.getOrganizationInfo(organization);
         if (organizationInfo == null) {
-            LOGGER.info(":^)");
+            throw new NetworkConfigException("organizationInfo is null");
         }
         LOGGER.info("NetworkConfig organization: {}", organizationInfo.getName());
 
         List<String> peersNames = organizationInfo.getPeerNames();
         for (String itPeer : peersNames) {
-            Peer checkPeer = client.newPeer(itPeer, networkConfig.getPeerProperties(itPeer).getProperty("url"),	networkConfig.getPeerProperties(itPeer));
+            Peer checkPeer = null;
+            try {
+                checkPeer = client.newPeer(itPeer, networkConfig.getPeerProperties(itPeer).getProperty("url"),	networkConfig.getPeerProperties(itPeer));
+            } catch (InvalidArgumentException e) {
+                LOGGER.error("Error creating peer");
+                throw new NetworkPeerException("Error creating peer", e);
+            }
+
             peersOrg.add(checkPeer);
 
             LOGGER.info("Peer: {}", itPeer);

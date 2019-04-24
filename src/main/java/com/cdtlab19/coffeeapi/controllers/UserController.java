@@ -45,7 +45,8 @@ public class UserController {
             IllegalAccessException, InvalidArgumentException, NetworkConfigurationException, CryptoException,
             ClassNotFoundException, NoSuchMethodException, ProposalException {
 
-        String[] args={user.getName(), user.getRemainingCoffee().toString()};
+        // String[] args={user.getName(), user.getRemainingCoffee().toString()};
+        String[] args={user.getName()};
         List<Response> response = userService.InvokeUser(args, "CreateUser");
         return new ResponseEntity<>(response , HttpStatus.OK );
     }

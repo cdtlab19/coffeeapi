@@ -1,5 +1,8 @@
 package com.cdtlab19.coffeeapi.domain;
 
+
+import com.cdtlab19.coffeeapi.services.exceptions.SetContextException;
+import com.cdtlab19.coffeeapi.services.exceptions.StartConnectionException;
 import lombok.NoArgsConstructor;
 import org.hyperledger.fabric.sdk.HFClient;
 import org.hyperledger.fabric.sdk.exception.CryptoException;
@@ -16,7 +19,9 @@ public class FabricConnection {
 
     private HFClient client;
 
-    public void initializesConnection() throws IllegalAccessException, InvocationTargetException, InvalidArgumentException, InstantiationException, NoSuchMethodException, CryptoException, ClassNotFoundException {
+    public void initializesConnection() throws StartConnectionException {
+            //throws IllegalAccessException, InvocationTargetException, InvalidArgumentException,
+            //InstantiationException, NoSuchMethodException, CryptoException, ClassNotFoundException {
         CryptoSuite cryptoSuite;
 
         try {
@@ -30,10 +35,8 @@ public class FabricConnection {
 
         } catch (IllegalAccessException | InstantiationException | ClassNotFoundException | CryptoException
                 | InvalidArgumentException | NoSuchMethodException | InvocationTargetException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
             LOGGER.error("Error initialize HFCLient");
-            throw e;
+            throw new StartConnectionException("Error initialize HFCLient", e);
         }
 
     }
@@ -43,14 +46,12 @@ public class FabricConnection {
         return client;
     }
 
-    public void setContext(Identity identity) throws InvalidArgumentException {
+    public void setContext(Identity identity) throws SetContextException {
         try {
             client.setUserContext(identity);
             LOGGER.info("Change context client to {}", identity.getAffiliation());
         } catch (InvalidArgumentException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            throw e;
+            throw new SetContextException("Error setting context HFClient");
         }
     }
 }

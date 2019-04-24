@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PreDestroy;
-import java.io.IOException;
 
 @NoArgsConstructor
 public class FabricChannel {
@@ -45,6 +44,7 @@ public class FabricChannel {
         } catch (Exception e) {
             // TODO: handle exception
             LOGGER.info("Empty channel");
+            // throw new FabricException(e.getMessage());
         }
 
         LOGGER.info("Try from file");
