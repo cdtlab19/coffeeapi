@@ -38,14 +38,18 @@ public class BlockchainService {
     private ObjectMapper mapper = new ObjectMapper();
     private Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
-    static final String privateKey_path = "./basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/cd96d5260ad4757551ed4a5a991e62130f8008a0bf996e4e4b84cd097a747fec_sk";
-    static final String certificate_path = "./basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem";
-    static final String CHANNEL = "mychannel";
+    private String privateKey_path;
+    private String certificate_path;
+    private String CHANNEL;
+//    static final String privateKey_path = "./basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/cd96d5260ad4757551ed4a5a991e62130f8008a0bf996e4e4b84cd097a747fec_sk";
+//    static final String certificate_path = "./basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem";
+//    static final String CHANNEL = "mychannel";
 
     public BlockchainService() {
         Security.addProvider(new BouncyCastleProvider());
         LOGGER.info("Security provider added.");
     }
+
 
     private Identity loadIdentity() throws IdentityPrivateKeyException, IdentityCertificateException {
         LOGGER.info("Loading Identity...");
@@ -59,21 +63,21 @@ public class BlockchainService {
 
 
     private PrivateKey loadPrivateKey(String path) throws IdentityPrivateKeyException {
-            try {
-                FileReader fileReader = new FileReader(privateKey_path);
-                PEMParser pemParser = new PEMParser(fileReader);
+        try {
+            FileReader fileReader = new FileReader(privateKey_path);
+            PEMParser pemParser = new PEMParser(fileReader);
 
-                PrivateKeyInfo pemPair = (PrivateKeyInfo) pemParser.readObject();
+            PrivateKeyInfo pemPair = (PrivateKeyInfo) pemParser.readObject();
 
-                PrivateKey privateKey = new JcaPEMKeyConverter()
-                        .setProvider(BouncyCastleProvider.PROVIDER_NAME)
-                        .getPrivateKey(pemPair);
+            PrivateKey privateKey = new JcaPEMKeyConverter()
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                    .getPrivateKey(pemPair);
 
-                return privateKey;
-            } catch (IOException e) {
-                LOGGER.error("failed reading private key");
-                throw new IdentityPrivateKeyException("failed reading private key", e);
-            }
+            return privateKey;
+        } catch (IOException e) {
+            LOGGER.error("failed reading private key");
+            throw new IdentityPrivateKeyException("failed reading private key", e);
+        }
     }
 
     private String loadCertificate(String path) throws IdentityCertificateException {
@@ -112,7 +116,7 @@ public class BlockchainService {
     }
 
     public List<Response> invoke(String chaincodeName, String chaincodeMethod, String path, String[] arguments)
-        throws InvokeException, TransactionException {
+            throws InvokeException, TransactionException {
 
         Fabric fabricTmp = connectToFabricNetwork(loadIdentity());
 
@@ -141,7 +145,7 @@ public class BlockchainService {
         LOGGER.info("Fcn: {}", transactionProposalRequest.getFcn());
         for (String args : transactionProposalRequest.getArgs())
             LOGGER.info("Args: {}", args);
-        LOGGER.info("Channel {}",channel.getName());
+        LOGGER.info("Channel {}", channel.getName());
         LOGGER.info("Status {}", channel.isInitialized());
 
         Collection<ProposalResponse> proposalResponses;
@@ -178,14 +182,15 @@ public class BlockchainService {
                 LOGGER.info("Status: {}", transaction.getResponseStatus());
                 LOGGER.info("Message: {}", transaction.getResponseMessage());
                 LOGGER.info("Payload: {}", new String(transaction.getEvent().getPayload()), StandardCharsets.UTF_8);
-                LOGGER.info("Status final: {}",	new String(transaction.getProposalResponsePayload(), StandardCharsets.UTF_8));
+                LOGGER.info("Status final: {}", new String(transaction.getProposalResponsePayload(), StandardCharsets.UTF_8));
 
                 responseProposal.add(new SdkResponse(String.valueOf(transaction.getResponseStatus()),
                         transaction.getResponseMessage(),
                         new String(transaction.getEvent().getPayload(), StandardCharsets.UTF_8),
                         new String(transaction.getProposalResponsePayload(), StandardCharsets.UTF_8)));
             }
-        } catch (Exception e) {  }
+        } catch (Exception e) {
+        }
 
         return responseProposal;
     }
@@ -240,7 +245,7 @@ public class BlockchainService {
             }
 
             try {
-                responseKey= new String(proposalResponse.getChaincodeActionResponsePayload());
+                responseKey = new String(proposalResponse.getChaincodeActionResponsePayload());
             } catch (InvalidArgumentException e) {
                 LOGGER.error("invalid argument sent to getChaincodeActionResponsePayload");
 
@@ -285,18 +290,38 @@ public class BlockchainService {
             throw new ChannelException("Transaction error: " + e.getMessage());
         }
 
-        if(channel == null) {
+        if (channel == null) {
             throw new ChannelException("channel is null");
         }
 
         return channel;
     }
 
+    public void setPrivateKey_path(String privateKey_path) {
+        this.privateKey_path = privateKey_path;
+    }
+
+    public String getPrivateKey_path() {
+        return privateKey_path;
+    }
+
+    public String getCertificate_path() {
+        return certificate_path;
+    }
+
+    public void setCertificate_path(String certificate_path) {
+        this.certificate_path = certificate_path;
+    }
+
+    public String getCHANNEL() {
+        return CHANNEL;
+    }
+
+    public void setCHANNEL(String CHANNEL) {
+        this.CHANNEL = CHANNEL;
+    }
+
 }
-
-
-
-
 
 
 
