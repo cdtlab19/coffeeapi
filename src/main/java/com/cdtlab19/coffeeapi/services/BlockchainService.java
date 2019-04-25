@@ -113,7 +113,6 @@ public class BlockchainService {
 
     public List<Response> invoke(String chaincodeName, String chaincodeMethod, String path, String[] arguments)
         throws InvokeException, TransactionException {
-            // throws InvalidArgumentException, NetworkConfigurationException, ProposalException, TransactionException
 
         Fabric fabricTmp = connectToFabricNetwork(loadIdentity());
 
@@ -172,29 +171,21 @@ public class BlockchainService {
     private List<Response> sendTransactionSync(List<Response> responseProposal, Channel channel,
                                                Collection<ProposalResponse> proposalResponses) throws TransactionException {
 
-        BlockEvent.TransactionEvent transactionEvent = null;
         try {
-            transactionEvent = channel.sendTransaction(proposalResponses).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new TransactionException("Failed sending transaction on sendTransaction", e);
-        }
+            BlockEvent.TransactionEvent transactionEvent = channel.sendTransaction(proposalResponses).get();
+            LOGGER.info("Size: {}", transactionEvent.getTransactionActionInfoCount());
+            for (BlockInfo.TransactionEnvelopeInfo.TransactionActionInfo transaction : transactionEvent.getTransactionActionInfos()) {
+                LOGGER.info("Status: {}", transaction.getResponseStatus());
+                LOGGER.info("Message: {}", transaction.getResponseMessage());
+                LOGGER.info("Payload: {}", new String(transaction.getEvent().getPayload()), StandardCharsets.UTF_8);
+                LOGGER.info("Status final: {}",	new String(transaction.getProposalResponsePayload(), StandardCharsets.UTF_8));
 
-        if(transactionEvent == null) {
-            throw new TransactionException("transactionEvent is null");
-        }
-
-        LOGGER.info("Size: {}", transactionEvent.getTransactionActionInfoCount());
-        for (BlockInfo.TransactionEnvelopeInfo.TransactionActionInfo transaction : transactionEvent.getTransactionActionInfos()) {
-            LOGGER.info("Status: {}", transaction.getResponseStatus());
-            LOGGER.info("Message: {}", transaction.getResponseMessage());
-            LOGGER.info("Payload: {}", new String(transaction.getEvent().getPayload()), StandardCharsets.UTF_8);
-            LOGGER.info("Status final: {}",	new String(transaction.getProposalResponsePayload(), StandardCharsets.UTF_8));
-
-            responseProposal.add(new SdkResponse(String.valueOf(transaction.getResponseStatus()),
-                    transaction.getResponseMessage(),
-                    new String(transaction.getEvent().getPayload(), StandardCharsets.UTF_8),
-                    new String(transaction.getProposalResponsePayload(), StandardCharsets.UTF_8)));
-        }
+                responseProposal.add(new SdkResponse(String.valueOf(transaction.getResponseStatus()),
+                        transaction.getResponseMessage(),
+                        new String(transaction.getEvent().getPayload(), StandardCharsets.UTF_8),
+                        new String(transaction.getProposalResponsePayload(), StandardCharsets.UTF_8)));
+            }
+        } catch (Exception e) {  }
 
         return responseProposal;
     }
@@ -292,6 +283,10 @@ public class BlockchainService {
         } catch (TransactionException e) {
             e.printStackTrace();
             throw new ChannelException("Transaction error: " + e.getMessage());
+        }
+
+        if(channel == null) {
+            throw new ChannelException("channel is null");
         }
 
         return channel;
