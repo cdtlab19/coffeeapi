@@ -40,43 +40,28 @@ public class UserController {
     )
 
     @PostMapping(path="/")
-    public ResponseEntity<Response> createUser(UserDTO user)throws IOException, TransactionException,
-            InstantiationException, InvocationTargetException, ExecutionException, InterruptedException,
-            IllegalAccessException, InvalidArgumentException, NetworkConfigurationException, CryptoException,
-            ClassNotFoundException, NoSuchMethodException, ProposalException {
-
+    public ResponseEntity<List<Response>> createUser(UserDTO user) throws TransactionException {
         String[] args={user.getName()};
-        // peer chaincode install -n user -p github.com/cdtlab19/coffee-chaincode/entry/user -v v1
-        // peer chaincode instantiate -n user -C mychannel -c '{"Args":["Init"]}' -v v1
         List<Response> response = userService.InvokeUser(args, "CreateUser");
-        return new ResponseEntity<>(response.get(0), HttpStatus.CREATED );
+        return new ResponseEntity<>(response, HttpStatus.CREATED );
     }
-
-    @PutMapping(path="/{id}")
-    public ResponseEntity<List<Response>> updateUser(@PathVariable String id, UserDTO user) throws IOException, TransactionException, InstantiationException, InvocationTargetException, ExecutionException, InterruptedException, IllegalAccessException, InvalidArgumentException, NetworkConfigurationException, CryptoException, ClassNotFoundException, NoSuchMethodException, ProposalException {
-        String[] args = {user.getName(),user.getRemainingCoffee().toString()};
-        List<Response> response = userService.InvokeUser(new String[]{id}, "DeleteUser");
-        response = userService.InvokeUser(args, "CreateUser");
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
 
     @DeleteMapping (path="/{id}")
-    public  ResponseEntity<List<Response>> deleteUser(@PathVariable String id) throws IOException, TransactionException, InstantiationException, InvocationTargetException, ExecutionException, InterruptedException, IllegalAccessException, InvalidArgumentException, NetworkConfigurationException, CryptoException, ClassNotFoundException, NoSuchMethodException, ProposalException {
+    public  ResponseEntity<List<Response>> deleteUser(@PathVariable String id) throws TransactionException {
         List<Response> response = userService.InvokeUser(new String[]{id}, "DeleteUser");
         return new ResponseEntity<>(response, HttpStatus.NO_CONTENT);
     }
 
     @GetMapping(path="/{id}")
-    public  ResponseEntity<Response> getUser(@PathVariable String id) throws InvalidArgumentException, NoSuchAlgorithmException, IOException, NoSuchProviderException, NetworkConfigurationException, InvalidKeySpecException, IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, CryptoException, InterruptedException, ExecutionException, TransactionException, ProposalException {
+    public  ResponseEntity<List<Response>> getUser(@PathVariable String id) {
         List<Response> response = userService.QueryUser(new String[]{id}, "GetUser");
-        return new ResponseEntity<>(response.get(0), HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping(path="/")
-    public ResponseEntity<Response> allUsers() throws IOException, NoSuchAlgorithmException, InvocationTargetException, InstantiationException, InvalidArgumentException, CryptoException, NoSuchProviderException, IllegalAccessException, NetworkConfigurationException, InvalidKeySpecException, NoSuchMethodException, ClassNotFoundException, InterruptedException, ExecutionException, TransactionException, ProposalException{
+    public ResponseEntity<List<Response>> allUsers() {
         List<Response> response = userService.QueryUser(new String[] {""}, "AllUser");
-        return new ResponseEntity<>(response.get(0) , HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
 
     }
 

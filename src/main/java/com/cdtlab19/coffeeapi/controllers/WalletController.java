@@ -34,13 +34,22 @@ public class WalletController {
                     @ApiResponse(code=200, message="Sucesso"),
             }
     )
+
     @PostMapping(path="/")
-    public ResponseEntity<List<String>> registerIdentity(IdentityDTO identityModel) throws IOException, TransactionException, InstantiationException, InvocationTargetException, ExecutionException, InterruptedException, IllegalAccessException, InvalidArgumentException, NetworkConfigurationException, CryptoException, ClassNotFoundException, NoSuchMethodException, ProposalException {
+    public ResponseEntity<List<String>> registerIdentity(IdentityDTO identityModel) {
         blockchainService.setPrivateKey_path(identityModel.getPrivateKey());
         blockchainService.setCertificate_path(identityModel.getCertificate());
-        blockchainService.setCHANNEL(identityModel.getChannel());
-        List<String> response = Arrays.asList(blockchainService.getPrivateKey_path(), blockchainService.getCertificate_path(), blockchainService.getCHANNEL());
-        return new ResponseEntity<>(response , HttpStatus.OK );
+
+        List<String> response = Arrays.asList(blockchainService.checkIdentity(blockchainService.getPrivateKey_path(),
+                                                blockchainService.getCertificate_path()));
+        return new ResponseEntity<>(response, HttpStatus.OK );
+    }
+
+    @PostMapping(path="/setchannel")
+    public ResponseEntity<List<String>> setChannel(String channelName){
+        List<String> response = Arrays.asList(blockchainService.checkIfChannelExist(channelName));
+        blockchainService.setCHANNEL(channelName);
+        return new ResponseEntity<>(response, HttpStatus.OK );
     }
 
 }

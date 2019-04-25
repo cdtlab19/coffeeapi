@@ -61,6 +61,15 @@ public class BlockchainService {
         return identity;
     }
 
+    public String checkIdentity(String privateKey_path, String certificate_path) throws IdentityPrivateKeyException, IdentityCertificateException {
+        LOGGER.info("Checking Identity...");
+
+        StoreEnrollement enrollment = new StoreEnrollement(loadPrivateKey(privateKey_path), loadCertificate(certificate_path));
+        Identity identity = new Identity("adminorg1", "Org1", "Org1MSP", enrollment);
+        LOGGER.info("Identity checked {}.", identity.getName());
+        return "adminorg1";
+    }
+
 
     private PrivateKey loadPrivateKey(String path) throws IdentityPrivateKeyException {
         try {
@@ -298,6 +307,36 @@ public class BlockchainService {
         }
 
         return channel;
+    }
+
+    public String checkIfChannelExist(String channelName)
+            throws ChannelException {
+
+        Fabric fabricTmp = connectToFabricNetwork(loadIdentity());
+        HFClient client = fabricTmp.getFabricConnection().getConnection();
+        FabricNetwork network = fabricTmp.getFabricNetwork();
+
+        Channel channel = null;
+        try {
+            channel = client.loadChannelFromConfig(channelName, network.getNetworkConfig());
+            channel.initialize();
+        } catch (InvalidArgumentException e) {
+            e.printStackTrace();
+            LOGGER.error("invalid arguments at channel creation");
+            throw new ChannelException("Invalid arguments at channel creation: " + e.getMessage());
+        } catch (NetworkConfigurationException e) {
+            e.printStackTrace();
+            throw new ChannelException("Fatal network error: " + e.getMessage());
+        } catch (TransactionException e) {
+            e.printStackTrace();
+            throw new ChannelException("Transaction error: " + e.getMessage());
+        }
+
+        if (channel == null) {
+            throw new ChannelException("channel is null");
+        }
+
+        return "mychannel";
     }
 
     public void setPrivateKey_path(String privateKey_path) {

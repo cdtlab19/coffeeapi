@@ -16,12 +16,12 @@ public class UserService {
     @Autowired
     BlockchainService service;
 
-    public List<Response> QueryUser(String [] args, String method) throws IOException, ExecutionException, InstantiationException, InvocationTargetException, NoSuchMethodException, InterruptedException, IllegalAccessException, InvalidArgumentException, TransactionException, CryptoException, ClassNotFoundException, NetworkConfigurationException, ProposalException {
+    public List<Response> QueryUser(String [] args, String method)  {
         return service.query("user", method, "github.com/cdtlab19/coffee-chaincode/entry/user", args);
 
     }
 
-    public List<Response> InvokeUser(String[] args, String method) throws IOException, ExecutionException, InstantiationException, InvocationTargetException, NoSuchMethodException, InterruptedException, IllegalAccessException, InvalidArgumentException, TransactionException, CryptoException, ClassNotFoundException, NetworkConfigurationException, ProposalException {
+    public List<Response> InvokeUser(String[] args, String method) throws TransactionException {
         return service.invoke("user", method, "github.com/cdtlab19/coffee-chaincode/entry/user", args);
 
     }

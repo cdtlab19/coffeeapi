@@ -16,12 +16,12 @@ public class CoffeeService {
     @Autowired
     BlockchainService service;
 
-    public List<Response> QueryCoffee(String [] args, String method) throws IOException, ExecutionException, InstantiationException, InvocationTargetException, NoSuchMethodException, InterruptedException, IllegalAccessException, InvalidArgumentException, TransactionException, CryptoException, ClassNotFoundException, NetworkConfigurationException, ProposalException {
+    public List<Response> QueryCoffee(String [] args, String method) {
         return service.query("coffee", method, "github.com/cdtlab19/coffee-chaincode/entry/coffee", args);
 
     }
 
-    public List<Response> InvokeCoffee(String[] args, String method) throws IOException, ExecutionException, InstantiationException, InvocationTargetException, NoSuchMethodException, InterruptedException, IllegalAccessException, InvalidArgumentException, TransactionException, CryptoException, ClassNotFoundException, NetworkConfigurationException, ProposalException {
+    public List<Response> InvokeCoffee(String[] args, String method) throws TransactionException {
         return service.invoke("coffee", method, "github.com/cdtlab19/coffee-chaincode/entry/coffee", args);
 
     }
