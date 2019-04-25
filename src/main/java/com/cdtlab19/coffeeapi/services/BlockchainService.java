@@ -41,8 +41,8 @@ public class BlockchainService {
     private String privateKey_path;
     private String certificate_path;
     private String CHANNEL;
-//    static final String privateKey_path = "./basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/cd96d5260ad4757551ed4a5a991e62130f8008a0bf996e4e4b84cd097a747fec_sk";
-//    static final String certificate_path = "./basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem";
+//    static final String privateKey_path = cd96d5260ad4757551ed4a5a991e62130f8008a0bf996e4e4b84cd097a747fec_sk;
+//    static final String certificate_path = Admin@org1.example.com-cert.pem;
 //    static final String CHANNEL = "mychannel";
 
     public BlockchainService() {
@@ -301,7 +301,7 @@ public class BlockchainService {
     }
 
     public void setPrivateKey_path(String privateKey_path) {
-        this.privateKey_path = privateKey_path;
+        this.privateKey_path = "./basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/" + privateKey_path;
     }
 
     public String getPrivateKey_path() {
@@ -313,7 +313,7 @@ public class BlockchainService {
     }
 
     public void setCertificate_path(String certificate_path) {
-        this.certificate_path = certificate_path;
+        this.certificate_path = "./basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/"+ certificate_path;
     }
 
     public String getCHANNEL() {

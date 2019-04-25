@@ -1,0 +1,3 @@
+privateKey = cd96d5260ad4757551ed4a5a991e62130f8008a0bf996e4e4b84cd097a747fec_sk
+certificate_path = Admin@org1.example.com-cert.pem
+CHANNEL = mychannel
