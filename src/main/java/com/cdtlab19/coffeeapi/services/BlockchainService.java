@@ -158,6 +158,9 @@ public class BlockchainService {
             LOGGER.info("Message {}", response.getMessage());
             LOGGER.info("Transaction Id {}", response.getTransactionID());
 
+            if (response.isInvalid())
+                throw new InvokeException(response.getMessage(), 404);
+
             responseInvokeChaincode.add(new PeerResponse(response.getPeer().getName(), response.getStatus().toString(),
                     response.getMessage(), response.getTransactionID()));
         }
@@ -169,7 +172,7 @@ public class BlockchainService {
 
 
     private List<Response> sendTransactionSync(List<Response> responseProposal, Channel channel,
-                                               Collection<ProposalResponse> proposalResponses) throws TransactionException {
+                                               Collection<ProposalResponse> proposalResponses) {
 
         try {
             BlockEvent.TransactionEvent transactionEvent = channel.sendTransaction(proposalResponses).get();

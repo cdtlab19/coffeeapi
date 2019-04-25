@@ -12,4 +12,8 @@ public class InvokeException extends APIException {
         super(msg, 500, cause);
     }
 
+    public InvokeException(String msg, int status) {
+        super(msg, status);
+    }
+
 }
